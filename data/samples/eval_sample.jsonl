@@ -1,0 +1,6 @@
+{"id": "s01", "question": "信用等级一共分几级？AA级要多少分？", "gold_doc": "示例用建筑劳务企业信用管理办法", "gold_article": "第三条", "must_refuse": false, "category": "条例体", "gold_keywords": ["AA", "90"], "notes": ""}
+{"id": "s02", "question": "拖欠工人工资超过30天没解决，扣多少分？", "gold_doc": "示例用建筑劳务企业信用管理办法", "gold_article": "第四条", "must_refuse": false, "category": "条例体", "gold_keywords": ["10", "拖欠"], "notes": "长条款，按项拆分后定位"}
+{"id": "s03", "question": "这个办法从什么时候开始施行？", "gold_doc": "示例用建筑劳务企业信用管理办法", "gold_article": "第六条", "must_refuse": false, "category": "时效性", "gold_keywords": ["2025", "施行"], "notes": ""}
+{"id": "s04", "question": "动态核查多久更新一次？", "gold_doc": "示例用动态核查工作通知", "gold_article": "二、核查周期", "must_refuse": false, "category": "通知体", "gold_keywords": ["每季度"], "notes": ""}
+{"id": "s05", "question": "对核查分数有异议，公示期是几天？", "gold_doc": "示例用动态核查工作通知", "gold_article": "三、结果公布", "must_refuse": false, "category": "通知体", "gold_keywords": ["5", "公示", "申诉"], "notes": ""}
+{"id": "s06", "question": "建筑劳务企业需要给工人缴住房公积金吗？", "gold_doc": "", "gold_article": "", "must_refuse": true, "category": "拒答", "gold_keywords": [], "notes": "样例语料中没有公积金相关条款，用于检验会不会编"}

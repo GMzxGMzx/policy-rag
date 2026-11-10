@@ -1,0 +1,31 @@
+services:
+  api:
+    build: .
+    container_name: policy-rag
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # 挂载 data 目录，改政策文件/评测集不用重建镜像
+      - ./data:/app/data
+    # 首次启动如果没有索引，先自动建一次
+    command: >
+      sh -c "[ -f data/index/chunks.jsonl ] || python -m scripts.ingest;
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    restart: unless-stopped
+
+  # 可选：完全离线的本地模型。启用方式：docker compose --profile local up
+  # 然后在 .env 里把 LLM_BASE_URL 指向 http://ollama:11434/v1
+  ollama:
+    image: ollama/ollama:latest
+    container_name: policy-rag-ollama
+    profiles: ["local"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+volumes:
+  ollama:

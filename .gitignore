@@ -1,0 +1,25 @@
+# 密钥与本地配置
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# 生成产物（可由 scripts 重新生成）
+data/index/
+data/index_sample/
+data/ocr_pages/
+data/reports/
+data/eval/runs/
+data/samples/runs/
+
+# 政策原文 PDF/DOCX：体积大，且请以官方发布为准，不入库
+# 想立刻跑通流程请用 data/samples/ 下的虚构样例
+data/raw/*.pdf
+data/raw/*.docx
+
+# 系统
+.DS_Store
