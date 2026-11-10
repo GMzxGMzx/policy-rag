@@ -1,5 +1,9 @@
 # 工程政策合规问答（Policy RAG）
 
+[![CI](https://github.com/GMzxGMzx/policy-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/GMzxGMzx/policy-rag/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)
+
 面向建筑与工程领域的政策问答系统：**条款级检索 · 引用可校验 · 证据不足直接拒答**。
 
 可私有化部署，模型可切换（OpenAI 兼容协议 / 本地 Ollama）。
@@ -63,35 +67,46 @@
 
 ## 4. 架构
 
-```
-政策文件 (.txt/.md/.pdf/.docx)
-        │
-        ▼
-┌──────────────────────────────────────────────┐
-│ ingest.py  解析 → 清洗 → 结构识别 → 条款切分   │
-│  · 页眉页脚/页码剔除                          │
-│  · 章-节-条 / 一、二、三 / 附件N 三种结构       │
-│  · PDF 硬换行回流                             │
-│  · 元数据：文号/机关/日期/施行日/废止清单       │
-│  · 扫描件检测（抽不到文本必须显式报错）          │
-└───────────────────┬──────────────────────────┘
-                    │ Chunk（带上下文头）
-                    ▼
-        ┌───────────┴───────────┐
-        ▼                       ▼
-   BM25 倒排索引            向量索引
-   （单字+二元+三元）      （BGE-M3 / OpenAI 兼容 / hash）
-        └───────────┬───────────┘
-                    ▼
-              RRF 融合（k=60）
-                    ▼
-              Rerank（可选）
-                    ▼
-         上下文组装（最多 N 条，带引用头）
-                    ▼
-        LLM 生成（强制引用 + 拒答规则）
-                    ▼
-   引用反查校验 → 有效/编造分离 → 答案 + 引用
+```mermaid
+flowchart TD
+    A["政策文件<br/>txt / md / pdf / docx"]
+
+    subgraph P1["① 解析"]
+        direction TB
+        B["结构识别<br/>第X条 · 一、二、三 · 1. 2. 3. · 附件N"]
+        C["清洗与元数据<br/>换行回流 · 附件边界 · 扫描件检测"]
+        D["条款级切块<br/>带上下文头"]
+        B --> D
+        C --> D
+    end
+
+    A --> B
+    D --> E & F
+
+    subgraph P2["② 检索"]
+        direction TB
+        E["BM25 倒排<br/>单字+二元+三元"]
+        F["向量索引<br/>BGE-M3 / hash"]
+        G["RRF 融合 k=60"]
+        H["Rerank（可选）"]
+        E --> G
+        F --> G
+        G --> H
+    end
+
+    H --> I
+
+    subgraph P3["③ 生成与校验"]
+        direction TB
+        I["上下文组装<br/>最多 N 条 + 引用头"]
+        J["LLM 生成<br/>强制引用 + 拒答规则"]
+        K["引用后置校验<br/>有效 / 编造 分离"]
+        I --> J
+        J --> K
+    end
+
+    K --> L["答案 + 可反查引用"]
+    L -.-> M["评测层：检索 / 决策 / 引用 三层指标<br/>6 类 Badcase 归因 · 基线回归对比"]
 ```
 
 **引用校验发生在生成之后**：模型写出的每个 `【《文件》第X条】` 都和本次召回集比对，对不上记 `invalid_citations` 并判失败。于是"编条号"这个最常见的幻觉变成可度量、可回归的指标。
@@ -108,7 +123,7 @@
 > pip install numpy
 > python -m scripts.ingest --raw data/samples --out data/index_sample
 > python -m scripts.evaluate --index data/index_sample \
->     --cases data/samples/eval_sample.jsonl --out data/samples/runs
+>     --cases data/samples/eval_sample.jsonl --out data/reports/sample_runs
 > ```
 >
 > 样例是虚构数据，只用于验证流程，不可引用。

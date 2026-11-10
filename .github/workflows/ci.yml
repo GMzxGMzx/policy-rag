@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装依赖（单元测试只需 numpy）
+        run: python -m pip install --upgrade pip numpy
+      - name: 运行 19 个单元测试
+        run: python tests/test_core.py
+
+  e2e:
+    name: 端到端（虚构样例语料）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 安装依赖
+        run: python -m pip install --upgrade pip -r requirements.txt
+      - name: 语料体检
+        run: python -m scripts.inspect_corpus --raw data/samples --out data/reports/corpus_report.md
+      - name: 建索引
+        run: python -m scripts.ingest --raw data/samples --out data/index_sample
+      - name: 跑评测
+        run: >
+          python -m scripts.evaluate
+          --index data/index_sample
+          --cases data/samples/eval_sample.jsonl
+          --out data/reports/sample_runs
+      - name: 指标门槛校验
+        run: python -m scripts.check_metrics --dir data/reports/sample_runs --min-recall 0.9 --min-citation 0.9
+      - name: 上传评测报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report
+          path: data/reports/sample_runs/
+          if-no-files-found: warn

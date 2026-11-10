@@ -20,7 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.config import settings  # noqa: E402
-from app.ingest import parse_file  # noqa: E402
+from app.ingest import iter_source_files, parse_file  # noqa: E402
 
 
 def _page_count(path: Path) -> int:
@@ -68,11 +68,7 @@ def main() -> int:
     args = parser.parse_args()
 
     raw_dir = Path(args.raw)
-    files = sorted(
-        p for p in raw_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() in {".pdf", ".docx", ".txt", ".md"}
-        and not p.name.startswith((".", "~$"))
-    )
+    files = iter_source_files(raw_dir)
     if not files:
         print(f"没有可解析文件：{raw_dir}")
         return 1

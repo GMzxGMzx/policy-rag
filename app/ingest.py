@@ -643,13 +643,31 @@ def load_manifest(raw_dir: Path) -> dict[str, dict[str, Any]]:
     return data if isinstance(data, dict) else {}
 
 
+# 这些目录里放的是生成产物，绝对不能当作语料读进来。
+# 踩过的坑：把评测报告写到 data/samples/runs/ 后，下次 ingest 会把 *.report.md 当成政策文档，
+# 语料被污染、指标无故下降，而且很难看出原因。
+_SKIP_DIRS = {"runs", "index", "index_sample", "reports", "ocr_pages", "__pycache__", ".git"}
+
+
+def iter_source_files(raw_dir: Path) -> list[Path]:
+    """列出目录下真正待解析的语料文件，自动跳过生成产物目录。"""
+    exts = {".txt", ".md", ".pdf", ".docx"}
+    out: list[Path] = []
+    for path in raw_dir.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in exts:
+            continue
+        if path.name.startswith((".", "~$")):
+            continue
+        parts = path.relative_to(raw_dir).parts[:-1]
+        if any(part in _SKIP_DIRS for part in parts):
+            continue
+        out.append(path)
+    return sorted(out)
+
+
 def load_corpus(raw_dir: Path) -> tuple[list[Clause], list[dict[str, Any]]]:
     """读取目录下所有支持的文件，返回条款与文件级元数据。"""
-    exts = {".txt", ".md", ".pdf", ".docx"}
-    files = sorted(
-        p for p in raw_dir.rglob("*")
-        if p.is_file() and p.suffix.lower() in exts and not p.name.startswith((".", "~$"))
-    )
+    files = iter_source_files(raw_dir)
     manifest = load_manifest(raw_dir)
     clauses: list[Clause] = []
     metas: list[dict[str, Any]] = []
